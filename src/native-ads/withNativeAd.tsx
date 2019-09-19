@@ -1,7 +1,6 @@
 import { EventSubscription } from 'fbemitter';
 import React, { ReactNode } from 'react';
 import { findNodeHandle, requireNativeComponent } from 'react-native';
-import { AdIconView, MediaView } from '../index';
 import {
   AdChoicesViewContext,
   AdIconViewContext,
@@ -15,10 +14,12 @@ import {
 import { HasNativeAd, NativeAd } from './nativeAd';
 import AdsManager from './NativeAdsManager';
 import { areSetsEqual } from '../util/areSetsEqual';
-
+import MediaView from './MediaViewManager'
+import AdIconView from './AdIconViewManager'
 interface NativeAdViewProps {
   adsManager: string;
   onAdLoaded: (args: { nativeEvent: NativeAd }) => void;
+  onAdError: () => void;
 }
 
 // tslint:disable-next-line:variable-name
@@ -35,6 +36,7 @@ interface AdWrapperState {
 interface AdWrapperProps {
   adsManager: AdsManager;
   onAdLoaded?: (ad: NativeAd) => void;
+  onAdError?: () => void;
 }
 
 export default <T extends HasNativeAd>(
@@ -89,8 +91,13 @@ export default <T extends HasNativeAd>(
       this.subscription = this.props.adsManager.onAdsLoaded(() =>
         this.setState({ canRequestAds: true })
       );
-      this.subscriptionError = this.props.adsManager.onAdsError(() =>
-        this.setState({ canRequestAds: false })
+      this.subscriptionError = this.props.adsManager.onAdsError(() => 
+        {
+          this.setState({ canRequestAds: false }, () => {
+            this.props.onAdError &&
+            this.props.onAdError()
+          })
+        }
       );
     }
 
